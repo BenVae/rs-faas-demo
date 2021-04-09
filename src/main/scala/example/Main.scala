@@ -1,15 +1,14 @@
-package example;
+package example
 
-import scala.collection.JavaConverters._
-import java.net.URLDecoder
-import com.amazonaws.services.lambda.runtime.events.S3Event
+import com.amazonaws.services.lambda.runtime.Context
+import com.amazonaws.services.lambda.runtime.events.{APIGatewayV2HTTPEvent, APIGatewayV2HTTPResponse}
 
-class Main {
-  def decodeS3Key(key: String): String = URLDecoder.decode(key.replace("+", " "), "utf-8")
-
-  def getSourceBuckets(event: S3Event): java.util.List[String] = {
-    val result = event.getRecords.asScala.map(record => decodeS3Key(record.getS3.getObject.getKey)).asJava
-    println(result)
-    return result
+class Main  {
+  def handler(apiGatewayEvent: APIGatewayV2HTTPEvent, context: Context): APIGatewayV2HTTPResponse = {
+    println(s"body = ${apiGatewayEvent.getBody()}")
+    return APIGatewayV2HTTPResponse.builder()
+      .withStatusCode(200)
+      .withBody("okay")
+      .build()
   }
 }

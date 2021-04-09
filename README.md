@@ -1,0 +1,1 @@
+Used this [tutorial](https://www.varokas.com/aws-lambda-functions-in-scala/)
