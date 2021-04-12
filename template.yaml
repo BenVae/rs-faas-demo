@@ -1,0 +1,30 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: rs-faas-demo
+
+Globals:
+  Function:
+    Timeout: 20
+
+Resources:
+  RsFaasDemo:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/scala-2.13/rs-faas-demo.jar
+      Handler: faas.Main::handle
+      Runtime: java11
+      MemorySize: 512
+      Events:
+        RsFaasDemo:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: get
+
+Outputs:
+  RsFaasDemoApi:
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
+  RsFaasDemo:
+    Value: !GetAtt RsFaasDemo.Arn
+  RsFaasDemoIamRole:
+    Value: !GetAtt RsFaasDemoRole.Arn

@@ -1,0 +1,10 @@
+version = 0.1
+[default]
+[default.deploy]
+[default.deploy.parameters]
+stack_name = "rs-faas-demo"
+s3_bucket = "aws-sam-cli-managed-default-samclisourcebucket-18wauojf7m9b5"
+s3_prefix = "rs-faas-demo"
+region = "eu-central-1"
+confirm_changeset = true
+capabilities = "CAPABILITY_IAM"
