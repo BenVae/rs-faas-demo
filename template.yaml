@@ -11,7 +11,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: target/scala-2.13/rs-faas-demo.jar
-      Handler: faas.Main::handle
+      Handler: faas.APIGatewayProxyHandler::handleRequest
       Runtime: java11
       MemorySize: 512
       Events:

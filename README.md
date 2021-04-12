@@ -11,8 +11,8 @@ sbt assembly
 
 ### Deploy it to AWS
 ```bash
- aws lambda update-function-code --function-name "rs-faas-demo" --zip fileb://target/scala-2.13/rs-faas-demo.jar
+sam deploy --guided
  ```
 
- ### Invoke the function (on AWS)
- aws lambda invoke --function-name "rs-faas-demo" /dev/stdout
+### Invoke the function (on AWS)
+aws lambda invoke --function-name "rs-faas-demo" /dev/stdout
