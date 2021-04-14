@@ -14,6 +14,9 @@ object ApiHandler {
     event: ScalaApiGatewayEvent,
     context: ScalaContext
   ): ScalaResponse = {
+
+    val token = System.getenv("BOT_TOKEN")
+    val BASE_URL = s"https://api.telegram.org/bot$token/"
    
     decode[Update](event.body) match {
       case Left(error) => {

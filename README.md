@@ -16,4 +16,6 @@ sam deploy --guided
  ```
 
 ### Invoke the function (on AWS)
+```
 aws lambda invoke --function-name "rs-faas-demo-RsFaasDemo-ODICW0P95RKL" /dev/stdout
+```

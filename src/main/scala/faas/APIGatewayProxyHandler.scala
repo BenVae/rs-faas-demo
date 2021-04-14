@@ -18,10 +18,16 @@ class APIGatewayProxyHandler {
       context: Context
   ): APIGatewayV2HTTPResponse = {
 
+    val headers = if (apiGatewayEvent.getHeaders() != null) {
+      apiGatewayEvent.getHeaders().asScala.toMap
+    } else {
+      Map.empty[String, String]
+    }
+
     val scalaResponse = ApiHandler.handle(
-      ScalaApiGatewayEvent(
+       ScalaApiGatewayEvent(
         version = apiGatewayEvent.getVersion(),
-        headers = apiGatewayEvent.getHeaders().asScala.toMap,
+        headers = headers,
         body = apiGatewayEvent.getBody()
       ),
       ScalaContext("my-request-id")
