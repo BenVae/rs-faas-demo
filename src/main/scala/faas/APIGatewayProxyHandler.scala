@@ -17,42 +17,39 @@ class APIGatewayProxyHandler {
       apiGatewayEvent: APIGatewayV2HTTPEvent,
       context: Context
   ): APIGatewayV2HTTPResponse = {
-    println(s"body = ${apiGatewayEvent.getBody()}")
 
-    val scalaEvent = ScalaApiGatewayEvent(
-      version = apiGatewayEvent.getVersion(),
-      headers = apiGatewayEvent.getHeaders().asScala.toMap,
-      body = apiGatewayEvent.getBody()
+    val scalaResponse = ApiHandler.handle(
+      ScalaApiGatewayEvent(
+        version = apiGatewayEvent.getVersion(),
+        headers = apiGatewayEvent.getHeaders().asScala.toMap,
+        body = apiGatewayEvent.getBody()
+      ),
+      new ScalaContext("my-request-id")
     )
-
-    val response = ApiHandler.handle(scalaEvent, context)
-    // val response = ScalaResponse(body = "test")
-
 
     return APIGatewayV2HTTPResponse
       .builder()
-      .withStatusCode(response.statusCode)
-      .withBody(response.body)
-      .withHeaders(response.javaHeaders)
+      .withStatusCode(scalaResponse.statusCode)
+      .withBody(scalaResponse.body)
+      .withHeaders(scalaResponse.javaHeaders)
       .build()
   }
 }
 
 case class ScalaApiGatewayEvent(
-      version: String,
-      headers: Map[String, String],
-      body: String
-  )
+    version: String = "1.0.0",
+    headers: Map[String, String] = Map(),
+    body: String = ""
+)
 
-/* class ScalaContext extends Context(
-  // TODO: impl
-) */
+case class ScalaContext(awsRequestId: String = "", functionName: String = "")
 
 case class ScalaResponse(
-      body: String,
-      headers: Map[String, String] = Map("Content-Type" -> "text/plain"),
-      statusCode: Int = 200
-  ) {
-    def javaHeaders: java.util.Map[String, String] = scala.collection.JavaConverters.mapAsJavaMapConverter(headers).asJava
-  }
-
+    body: String,
+    headers: Map[String, String] = Map("Content-Type" -> "text/plain"),
+    statusCode: Int = 200
+) {
+  // TODO: should we have this here?
+  def javaHeaders: java.util.Map[String, String] =
+    scala.collection.JavaConverters.mapAsJavaMapConverter(headers).asJava
+}

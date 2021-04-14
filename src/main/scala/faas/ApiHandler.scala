@@ -8,10 +8,11 @@ import com.amazonaws.services.lambda.runtime.events.{
 import faas.APIGatewayProxyHandler
 
 object ApiHandler {
+
   def handle(
     event: ScalaApiGatewayEvent,
-    context: Context
+    context: ScalaContext
   ): ScalaResponse = {
-    ScalaResponse(s"Hello world! This is a rs-faas-demo.")
+    ScalaResponse("Hello world! This is a rs-faas-demo.")
   }  
 }
