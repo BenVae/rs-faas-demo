@@ -1,5 +1,7 @@
 target/
 *./DS_Store
 /.metals
+project/metals.sbt
 /.vscode
 .DS_Store
+*/.bloop

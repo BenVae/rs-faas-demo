@@ -9,8 +9,9 @@ import faas.APIGatewayProxyHandler
 
 object ApiHandler {
   def handle(
-      request: ScalaRequest
-  ): Response = {
-    Response(s"Hello world! This is a rs-faas-demo.")
+    event: ScalaApiGatewayEvent,
+    context: Context
+  ): ScalaResponse = {
+    ScalaResponse(s"Hello world! This is a rs-faas-demo.")
   }  
 }
