@@ -9,11 +9,10 @@ import com.amazonaws.services.lambda.runtime.events.{
 }
 import com.amazonaws.services.lambda.runtime.Context
 import faas.ApiHandler
-import faas.ApiHandler.Response
+import faas.APIGatewayProxyHandler
 import faas.TestContext
 
 class MainSpec extends AnyWordSpec with Matchers {
-
   "Given empty input" should {
     "return 200 with body 'okay'" in {
       ApiHandler.handle(
