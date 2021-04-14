@@ -24,7 +24,7 @@ class APIGatewayProxyHandler {
         headers = apiGatewayEvent.getHeaders().asScala.toMap,
         body = apiGatewayEvent.getBody()
       ),
-      new ScalaContext("my-request-id")
+      ScalaContext("my-request-id")
     )
 
     return APIGatewayV2HTTPResponse

@@ -9,13 +9,24 @@ import faas.APIGatewayProxyHandler
 
 class MainSpec extends AnyWordSpec with Matchers {
   "Given empty input" should {
-    "return 200 with body 'okay'" in {
+    "return 200 with body serializable Update" in {
       ApiHandler.handle(
-        ScalaApiGatewayEvent(),
+        ScalaApiGatewayEvent(body = "{\"message\":{\"text\":\"Hello world! This is a rs-faas-demo.\"}}"),
         ScalaContext()
       ) shouldBe ScalaResponse(
         body = "Hello world! This is a rs-faas-demo.",
         headers = Map("Content-Type" -> "text/plain")
+      )
+    }
+
+    "return 404 with undeserializable Update" in {
+      ApiHandler.handle(
+        ScalaApiGatewayEvent(body = "{{\"text\":\"Hello world! This is a rs-faas-demo.\"}"),
+        ScalaContext()
+      ) shouldBe ScalaResponse(
+        body = "error: expected \" got '{\"text...' (line 1, column 2)",
+        headers = Map("Content-Type" -> "text/plain"),
+        statusCode = 404
       )
     }
   }

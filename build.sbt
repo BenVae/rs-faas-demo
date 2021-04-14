@@ -14,6 +14,14 @@ libraryDependencies ++= Seq(
     "org.scalatest" %% "scalatest" % "3.2.2"
   )
 
+val circeVersion = "0.12.3"
+
+libraryDependencies ++= Seq(
+  "io.circe" %% "circe-core",
+  "io.circe" %% "circe-generic",
+  "io.circe" %% "circe-parser"
+).map(_ % circeVersion)
+
 assemblyJarName in assembly := "rs-faas-demo.jar"
 
 assemblyMergeStrategy in assembly := {

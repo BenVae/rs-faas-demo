@@ -5,3 +5,4 @@ project/metals.sbt
 /.vscode
 .DS_Store
 */.bloop
+*.bloop
