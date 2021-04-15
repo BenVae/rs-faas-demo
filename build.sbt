@@ -12,7 +12,8 @@ libraryDependencies ++= Seq(
     "com.amazonaws" % "aws-lambda-java-core" % "1.2.1",
     "com.amazonaws" % "aws-lambda-java-events" % "3.8.0",
     "org.scalatest" %% "scalatest" % "3.2.2",
-    "com.softwaremill.sttp.client3" %% "core" % "3.3.0-RC2"
+    "com.softwaremill.sttp.client3" %% "core" % "3.3.0-RC2",
+    "com.amazonaws" % "aws-java-sdk-dynamodb" % "1.11.999"
   )
 
 val circeVersion = "0.12.3"

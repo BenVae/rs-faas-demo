@@ -14,13 +14,15 @@ Resources:
       Handler: faas.APIGatewayProxyHandler::handleRequest
       Runtime: java11
       MemorySize: 512
+      Policies:
+      - AmazonDynamoDBFullAccess
       Events:
         RsFaasDemo:
           Type: Api
           Properties:
             Path: /hello
             Method: post
-
+    
 Outputs:
   RsFaasDemoApi:
     Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/hello/"
