@@ -9,9 +9,8 @@ import faas.APIGatewayProxyHandler
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 import sttp.client3._
 import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2._;
+import com.amazonaws.services.dynamodbv2._
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import software.amazon.awssdk.services.dynamodb.model
 import scala.collection.JavaConverters._
 
 object ApiHandler {
@@ -32,6 +31,8 @@ object ApiHandler {
       case Right(update) => {
         if (update.message.text == "/start") {
           val firstImage = readImage("1").get("prev").get.getS()
+          putUser(update.message.chat.id, firstImage)
+
           val request = basicRequest
             .body(
               Map(
@@ -61,6 +62,23 @@ object ApiHandler {
       .getItem()
       .asScala
       .toMap
+  }
+
+  def putUser(id: Int, currentImage: String) = {
+    client
+      .putItem(
+        "mars_users", {
+          scala.collection.JavaConverters
+            .mapAsJavaMapConverter(
+              Map(
+                "id" -> { new AttributeValue(id.toString) },
+                "current_image" -> { new AttributeValue(currentImage) },
+                "subscribed" -> { new AttributeValue().withBOOL(false) }
+              )
+            )
+            .asJava
+        }
+      )
   }
 }
 
