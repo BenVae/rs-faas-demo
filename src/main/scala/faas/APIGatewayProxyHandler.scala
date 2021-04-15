@@ -25,7 +25,7 @@ class APIGatewayProxyHandler {
     }
 
     val scalaResponse = ApiHandler.handle(
-       ScalaApiGatewayEvent(
+      ScalaApiGatewayEvent(
         version = apiGatewayEvent.getVersion(),
         headers = headers,
         body = apiGatewayEvent.getBody()

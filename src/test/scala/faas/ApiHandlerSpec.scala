@@ -8,13 +8,16 @@ import faas.ApiHandler
 import faas.APIGatewayProxyHandler
 
 class MainSpec extends AnyWordSpec with Matchers {
+
+  val chatId = System.getenv("CHAT_ID")
+
   "Given Telegram Update" should {
     "return 200 when serializable Update" in {
       ApiHandler.handle(
-        ScalaApiGatewayEvent(body = "{\"message\":{\"text\":\"Hello world! This is a rs-faas-demo.\"}}"),
+        ScalaApiGatewayEvent(body = "{\"message\":{\"text\":\"Hello world! This is a rs-faas-demo.\",\"chat\":{\"id\":"+chatId+",\"first_name\":\"Robert\"}}}"),
         ScalaContext()
       ) shouldBe ScalaResponse(
-        body = "Hello world! This is a rs-faas-demo.",
+        body = "OK",
         headers = Map("Content-Type" -> "text/plain")
       )
     }
