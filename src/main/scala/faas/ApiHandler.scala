@@ -9,10 +9,9 @@ import faas._
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 import sttp.client3._
 
-
 object ApiHandler {
   val token = System.getenv("BOT_TOKEN")
-  
+
   val backend = HttpURLConnectionBackend()
   val BASE_URL = s"https://api.telegram.org/bot$token"
   val PREV_IMAGE = "« Older Image"
@@ -36,6 +35,11 @@ object ApiHandler {
             val firstImage = DB.readImage(firstImageId)
             sendImage(userId, firstImage)
             DB.putUser(userId, firstImageId)
+          } else if (text == "/health") {
+            // TODO: consider using a fancy gif, sticker or emoji
+            sendMessage(userId, "Connecting to mars rover...")
+            val health = HealthLambdaClient.invoke()
+            sendMessage(userId, "I'm fine, my energy level is at: " + health + "%")
           } else {
             sendMessage(userId, text + " isn\'t martian.")
           }

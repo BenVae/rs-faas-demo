@@ -16,12 +16,20 @@ Resources:
       MemorySize: 512
       Policies:
       - AmazonDynamoDBFullAccess
+      - AWSLambda_FullAccess
       Events:
         RsFaasDemo:
           Type: Api
           Properties:
             Path: /hello
             Method: post
+  RsFaasHealthDemo:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: target/scala-2.13/rs-faas-demo.jar
+      Handler: faas.RoverHealthHandler::handleRequest
+      Runtime: java11
+      MemorySize: 512
     
 Outputs:
   RsFaasDemoApi:
@@ -30,3 +38,7 @@ Outputs:
     Value: !GetAtt RsFaasDemo.Arn
   RsFaasDemoIamRole:
     Value: !GetAtt RsFaasDemoRole.Arn
+  RsFaasHealthDemo:
+    Value: !GetAtt RsFaasHealthDemo.Arn
+  RsFaasHealthDemoIamRole:
+    Value: !GetAtt RsFaasHealthDemoRole.Arn
