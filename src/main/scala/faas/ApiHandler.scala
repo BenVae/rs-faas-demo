@@ -22,6 +22,8 @@ object ApiHandler {
     .build();
   val backend = HttpURLConnectionBackend()
   val BASE_URL = s"https://api.telegram.org/bot$token"
+  val PREV_IMAGE = "« Older Image"
+  val NEXT_IMAGE = "Newer Image »"
 
   def handle(
       event: ScalaApiGatewayEvent,
@@ -32,16 +34,28 @@ object ApiHandler {
         ScalaResponse("error: " + error.getMessage(), statusCode = 404)
       }
       case Right(update) => {
-        val userId = update.message.chat.id
-        val text = update.message.text
-        if (text == "/start") {
-          val firstImageId = readImage("1").get("prev").get.getS()
-          val firstImage = readImage(firstImageId)
-          sendImage(userId, firstImage)
-          putUser(userId, firstImageId)
-        } else {
-          sendMessage(userId, text + " isn\'t martian.")
+
+        if (update.message.isDefined) {
+          val message = update.message.get
+          val userId = message.chat.id
+          val text = message.text
+          if (text == "/start") {
+            val firstImageId = readImage("1").get("prev").get.getS()
+            val firstImage = readImage(firstImageId)
+            sendImage(userId, firstImage)
+            putUser(userId, firstImageId)
+          } else {
+            sendMessage(userId, text + " isn\'t martian.")
+          }
+        } else if (update.callback_query.isDefined) {
+          val callback_query = update.callback_query.get
+          val chatId = callback_query.from.id
+          sendMessage(
+            chatId,
+            "You sent a callback query. That worked. I think."
+          )
         }
+
         ScalaResponse("OK")
       }
     }
@@ -124,21 +138,31 @@ object ApiHandler {
   def getCaption(image: Map[String, AttributeValue]): String = {
     image.get("title").get.getS() + "\n" + image.get("publish_date").get.getS()
   }
-
 }
 
 case class Update(
+    message: Option[Message],
+    callback_query: Option[CallbackQuery]
+)
+
+case class CallbackQuery(
+    data: String,
+    from: From,
     message: Message
+)
+
+case class From(
+    id: Int
 )
 
 case class Message(
     text: String,
-    chat: Chat
+    chat: Chat,
+    message_id: Int
 )
 
 case class Chat(
     id: Int,
-    first_name: String
 )
 
 // TODO:
