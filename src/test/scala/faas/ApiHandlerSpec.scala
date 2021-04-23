@@ -19,7 +19,7 @@ class MainSpec extends AnyWordSpec with Matchers {
         ScalaApiGatewayEvent(body =
           Update(
             message = Some(
-              Message(text = "Hello world", chat = Chat(1), message_id = 123)
+              Message(text = "Hello world", chat = Chat(1))
             ),
             callback_query = None
           ).asJson.noSpaces
@@ -39,8 +39,7 @@ class MainSpec extends AnyWordSpec with Matchers {
               CallbackQuery(
                 data = "« Older Image",
                 from = From(id = 123123),
-                message = Message(
-                  text = "Hello world!",
+                message = CallbackMessage(
                   chat = Chat(1),
                   message_id = 123
                 )

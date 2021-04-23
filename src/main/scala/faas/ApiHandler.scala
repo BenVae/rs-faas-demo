@@ -39,7 +39,7 @@ object ApiHandler {
           val userId = message.chat.id
           val text = message.text
           if (text == "/start") {
-            val firstImageId = readImage("1").id
+            val firstImageId = readImage("1").prev.get
             val firstImage = readImage(firstImageId)
             sendImage(userId, firstImage)
             putUser(userId, firstImageId)
@@ -54,7 +54,6 @@ object ApiHandler {
             "You sent a callback query. That worked. I think."
           )
         }
-
         ScalaResponse("OK")
       }
     }
@@ -84,7 +83,7 @@ object ApiHandler {
         Some(attributeValues.get("next").get.getS())
 
     MarsImage(
-      id = attributeValues.get("_id").get.getS(),
+      id = attributeValues.get("id").get.getS(),
       title = attributeValues.get("title").get.getS(),
       publish_date = attributeValues.get("publish_date").get.getS(),
       url = attributeValues.get("url").get.getS(),
@@ -110,7 +109,6 @@ object ApiHandler {
       )
   }
 
-  // TODO: Find out the return type
   def sendMessage(chatId: Int, text: String) = {
     basicRequest
       .body(
@@ -123,7 +121,6 @@ object ApiHandler {
       .send(backend)
   }
 
-  // TODO: Find out the return type
   def sendImage(chatId: Int, image: MarsImage) = {
     val partialRequestBody =
       Body(
@@ -176,7 +173,12 @@ case class Update(
 case class CallbackQuery(
     data: String,
     from: From,
-    message: Message
+    message: CallbackMessage
+)
+
+case class CallbackMessage(
+    chat: Chat,
+    message_id: Int
 )
 
 case class From(
@@ -185,8 +187,7 @@ case class From(
 
 case class Message(
     text: String,
-    chat: Chat,
-    message_id: Int
+    chat: Chat
 )
 
 case class Chat(
