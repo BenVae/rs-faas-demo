@@ -31,30 +31,6 @@ class MainSpec extends AnyWordSpec with Matchers {
       )
     }
 
-    "return 200 when serializable Update with callback_query" in {
-      ApiHandler.handle(
-        ScalaApiGatewayEvent(body =
-          Update(
-            callback_query = Some(
-              CallbackQuery(
-                data = "« Older Image",
-                from = From(id = 123123),
-                message = CallbackMessage(
-                  chat = Chat(1),
-                  message_id = 123
-                )
-              )
-            ),
-            message = None
-          ).asJson.noSpaces
-        ),
-        ScalaContext()
-      ) shouldBe ScalaResponse(
-        body = "OK",
-        headers = Map("Content-Type" -> "text/plain")
-      )
-    }
-
     "return 404 when undeserializable Update" in {
       ApiHandler.handle(
         ScalaApiGatewayEvent(body =

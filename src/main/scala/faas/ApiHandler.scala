@@ -5,21 +5,14 @@ import com.amazonaws.services.lambda.runtime.events.{
   APIGatewayV2HTTPEvent,
   APIGatewayV2HTTPResponse
 }
-import faas.APIGatewayProxyHandler
+import faas._
 import io.circe._, io.circe.generic.auto._, io.circe.parser._, io.circe.syntax._
 import sttp.client3._
-import com.amazonaws.regions.Regions;
-import com.amazonaws.services.dynamodbv2._
-import com.amazonaws.services.dynamodbv2.model.AttributeValue
-import scala.collection.JavaConverters._
-import com.amazonaws.services.dynamodbv2.model.PutItemResult
+
 
 object ApiHandler {
   val token = System.getenv("BOT_TOKEN")
-  val client: AmazonDynamoDB = AmazonDynamoDBClientBuilder
-    .standard()
-    .withRegion(Regions.EU_CENTRAL_1)
-    .build();
+  
   val backend = HttpURLConnectionBackend()
   val BASE_URL = s"https://api.telegram.org/bot$token"
   val PREV_IMAGE = "« Older Image"
@@ -39,74 +32,23 @@ object ApiHandler {
           val userId = message.chat.id
           val text = message.text
           if (text == "/start") {
-            val firstImageId = readImage("1").prev.get
-            val firstImage = readImage(firstImageId)
+            val firstImageId = DB.readImage("1").prev.get
+            val firstImage = DB.readImage(firstImageId)
             sendImage(userId, firstImage)
-            putUser(userId, firstImageId)
+            DB.putUser(userId, firstImageId)
           } else {
             sendMessage(userId, text + " isn\'t martian.")
           }
         } else if (update.callback_query.isDefined) {
           val callback_query = update.callback_query.get
           val chatId = callback_query.from.id
-          sendMessage(
-            chatId,
-            "You sent a callback query. That worked. I think."
-          )
+          val messageId = callback_query.message.message_id
+          val image = DB.readImage(update.callback_query.get.data)
+          updateImage(chatId, messageId, image)
         }
         ScalaResponse("OK")
       }
     }
-  }
-
-  def readImage(id: String): MarsImage = {
-    val attributeValues = client
-      .getItem(
-        "mars_images", {
-          scala.collection.JavaConverters
-            .mapAsJavaMapConverter(Map("id" -> { new AttributeValue(id) }))
-            .asJava
-        }
-      )
-      .getItem()
-      .asScala
-      .toMap
-    val prev =
-      if (attributeValues.get("prev").isEmpty)
-        None
-      else
-        Some(attributeValues.get("prev").get.getS())
-    val next =
-      if (attributeValues.get("next").isEmpty)
-        None
-      else
-        Some(attributeValues.get("next").get.getS())
-
-    MarsImage(
-      id = attributeValues.get("id").get.getS(),
-      title = attributeValues.get("title").get.getS(),
-      publish_date = attributeValues.get("publish_date").get.getS(),
-      url = attributeValues.get("url").get.getS(),
-      prev = prev,
-      next = next
-    )
-  }
-
-  def putUser(id: Int, currentImage: String): PutItemResult = {
-    client
-      .putItem(
-        "mars_users", {
-          scala.collection.JavaConverters
-            .mapAsJavaMapConverter(
-              Map(
-                "id" -> { new AttributeValue(id.toString) },
-                "current_image" -> { new AttributeValue(currentImage) },
-                "subscribed" -> { new AttributeValue().withBOOL(false) }
-              )
-            )
-            .asJava
-        }
-      )
   }
 
   def sendMessage(chatId: Int, text: String) = {
@@ -123,9 +65,9 @@ object ApiHandler {
 
   def sendImage(chatId: Int, image: MarsImage) = {
     val partialRequestBody =
-      Body(
+      SendImageBody(
         chatId,
-        image.title + "\n" + image.publish_date,
+        getCaption(image),
         getImageReplyMarkup(image),
         photo = None,
         animation = None
@@ -144,14 +86,35 @@ object ApiHandler {
       .send(backend)
   }
 
+  def updateImage(chatId: Int, messageId: Int, image: MarsImage) = {
+    val mediaType = if (isPhoto(image.url)) "photo" else "animation"
+
+    val body = UpdateImageBody(
+      chatId,
+      messageId,
+      Media(`type` = mediaType, media = image.url, caption = getCaption(image)),
+      getImageReplyMarkup(image)
+    )
+
+    basicRequest
+      .body(body.asJson.noSpaces)
+      .contentType("application/json")
+      .post(uri"$BASE_URL/editMessageMedia")
+      .send(backend)
+  }
+
+  def getCaption(image: MarsImage) = {
+    image.title + "\n" + image.publish_date
+  }
+
   def getImageReplyMarkup(image: MarsImage): InlineKeyboardMarkup = {
     val navWithPrev =
       if (image.prev.isDefined)
-        List(InlineKeyboardButton(PREV_IMAGE, PREV_IMAGE))
+        List(InlineKeyboardButton(PREV_IMAGE, image.prev.get))
       else List()
     val navWithNext =
       if (image.next.isDefined)
-        List(InlineKeyboardButton(NEXT_IMAGE, NEXT_IMAGE))
+        List(InlineKeyboardButton(NEXT_IMAGE, image.next.get))
       else List()
     InlineKeyboardMarkup(List(navWithPrev ::: navWithNext))
   }
@@ -164,58 +127,3 @@ object ApiHandler {
     imageUrl.endsWith(format)
   }
 }
-
-case class Update(
-    message: Option[Message],
-    callback_query: Option[CallbackQuery]
-)
-
-case class CallbackQuery(
-    data: String,
-    from: From,
-    message: CallbackMessage
-)
-
-case class CallbackMessage(
-    chat: Chat,
-    message_id: Int
-)
-
-case class From(
-    id: Int
-)
-
-case class Message(
-    text: String,
-    chat: Chat
-)
-
-case class Chat(
-    id: Int
-)
-
-case class InlineKeyboardMarkup(
-    inline_keyboard: List[List[InlineKeyboardButton]]
-)
-
-case class InlineKeyboardButton(
-    text: String,
-    callback_data: String
-)
-
-case class Body(
-    chat_id: Int,
-    caption: String,
-    reply_markup: InlineKeyboardMarkup,
-    photo: Option[String],
-    animation: Option[String]
-)
-
-case class MarsImage(
-    id: String,
-    title: String,
-    url: String,
-    prev: Option[String],
-    next: Option[String],
-    publish_date: String
-)
