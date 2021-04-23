@@ -34,13 +34,12 @@ object ApiHandler {
         ScalaResponse("error: " + error.getMessage(), statusCode = 404)
       }
       case Right(update) => {
-
         if (update.message.isDefined) {
           val message = update.message.get
           val userId = message.chat.id
           val text = message.text
           if (text == "/start") {
-            val firstImageId = readImage("1").get("prev").get.getS()
+            val firstImageId = readImage("1").id
             val firstImage = readImage(firstImageId)
             sendImage(userId, firstImage)
             putUser(userId, firstImageId)
@@ -61,8 +60,8 @@ object ApiHandler {
     }
   }
 
-  def readImage(id: String): Map[String, AttributeValue] = {
-    client
+  def readImage(id: String): MarsImage = {
+    val attributeValues = client
       .getItem(
         "mars_images", {
           scala.collection.JavaConverters
@@ -73,6 +72,25 @@ object ApiHandler {
       .getItem()
       .asScala
       .toMap
+    val prev =
+      if (attributeValues.get("prev").isEmpty)
+        None
+      else
+        Some(attributeValues.get("prev").get.getS())
+    val next =
+      if (attributeValues.get("next").isEmpty)
+        None
+      else
+        Some(attributeValues.get("next").get.getS())
+
+    MarsImage(
+      id = attributeValues.get("_id").get.getS(),
+      title = attributeValues.get("title").get.getS(),
+      publish_date = attributeValues.get("publish_date").get.getS(),
+      url = attributeValues.get("url").get.getS(),
+      prev = prev,
+      next = next
+    )
   }
 
   def putUser(id: Int, currentImage: String): PutItemResult = {
@@ -106,26 +124,40 @@ object ApiHandler {
   }
 
   // TODO: Find out the return type
-  def sendImage(chatId: Int, image: Map[String, AttributeValue]) = {
-    val url = image.get("url").get.getS()
-    val partialRequestForm = Map(
-      "chat_id" -> chatId.toString,
-      "caption" -> getCaption(image)
-    )
-    val (command, requestForm) =
-      if (isPhoto(url)) {
-        ("sendPhoto", partialRequestForm + ("photo" -> url))
-      } else {
-        ("sendAnimation", partialRequestForm + ("animation" -> url))
-      }
+  def sendImage(chatId: Int, image: MarsImage) = {
+    val partialRequestBody =
+      Body(
+        chatId,
+        image.title + "\n" + image.publish_date,
+        getImageReplyMarkup(image),
+        photo = None,
+        animation = None
+      )
+
+    val (command, requestBody) = if (isPhoto(image.url)) {
+      ("sendPhoto", partialRequestBody.copy(photo = Some(image.url)))
+    } else {
+      ("sendAnimation", partialRequestBody.copy(animation = Some(image.url)))
+    }
 
     basicRequest
-      .body(requestForm)
+      .body(requestBody.asJson.noSpaces)
+      .contentType("application/json")
       .post(uri"$BASE_URL/$command")
       .send(backend)
   }
 
-  def getImageReplyMarkup(image: Map[String, AttributeValue]) {}
+  def getImageReplyMarkup(image: MarsImage): InlineKeyboardMarkup = {
+    val navWithPrev =
+      if (image.prev.isDefined)
+        List(InlineKeyboardButton(PREV_IMAGE, PREV_IMAGE))
+      else List()
+    val navWithNext =
+      if (image.next.isDefined)
+        List(InlineKeyboardButton(NEXT_IMAGE, NEXT_IMAGE))
+      else List()
+    InlineKeyboardMarkup(List(navWithPrev ::: navWithNext))
+  }
 
   def isPhoto(imageUrl: String): Boolean = {
     isImageFormat(imageUrl, ".jpg") || isImageFormat(imageUrl, ".jpeg")
@@ -133,10 +165,6 @@ object ApiHandler {
 
   def isImageFormat(imageUrl: String, format: String): Boolean = {
     imageUrl.endsWith(format)
-  }
-
-  def getCaption(image: Map[String, AttributeValue]): String = {
-    image.get("title").get.getS() + "\n" + image.get("publish_date").get.getS()
   }
 }
 
@@ -162,11 +190,31 @@ case class Message(
 )
 
 case class Chat(
-    id: Int,
+    id: Int
 )
 
-// TODO:
+case class InlineKeyboardMarkup(
+    inline_keyboard: List[List[InlineKeyboardButton]]
+)
+
+case class InlineKeyboardButton(
+    text: String,
+    callback_data: String
+)
+
+case class Body(
+    chat_id: Int,
+    caption: String,
+    reply_markup: InlineKeyboardMarkup,
+    photo: Option[String],
+    animation: Option[String]
+)
+
 case class MarsImage(
     id: String,
-    prev: String
+    title: String,
+    url: String,
+    prev: Option[String],
+    next: Option[String],
+    publish_date: String
 )
